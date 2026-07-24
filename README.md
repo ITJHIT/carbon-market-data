@@ -45,7 +45,33 @@ flags stale/thin series as `STALE-DATA` instead of faking a signal.
 
 A **GitHub Actions cron** (`.github/workflows/weekly.yml`) regenerates the report
 every Monday and commits it to `reports/latest/`, so the repo stays a *living*
-artifact. Roadmap: add **Korea K-ETS (KAU, from KRX)** direct series.
+artifact.
+
+## Korea K-ETS (KAU)
+
+KRX has no free real-time carbon API, so Korea data uses a **local CSV drop**.
+Download KAU daily prices from KRX (배출권시장 정보플랫폼 <https://ets.krx.co.kr> or
+<https://data.krx.co.kr>), save as `data/kau.csv` (`date,close`; see
+`data/kau_sample.csv`), and the weekly report adds a **Korea K-ETS section**
+automatically. `data/kau.csv` is gitignored; the sample template is committed.
+
+```bash
+python kau.py            # preview the Korea section (or a "no data" hint)
+```
+
+## Backtest (paper trading, Phase 3)
+
+`backtest.py` runs the newsletter's own trend/momentum signal against a carbon ETF
+over 5 years and compares it to buy & hold — no broker, no money. It reports total
+return, CAGR, Sharpe, and max drawdown, and writes an equity-curve chart.
+
+```bash
+python backtest.py KRBN  # -> out/backtest_KRBN.png + stats
+```
+
+Honesty note: on KRBN the naive long/flat momentum signal **underperformed** buy &
+hold. That is the point — the engine gives an unfiltered verdict before any capital
+is risked, and the product is positioned as market *intelligence*, not a magic signal.
 
 ## Why
 
