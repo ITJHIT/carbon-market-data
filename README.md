@@ -87,11 +87,27 @@ Result (honest): IS Sharpe (0.5–0.9) collapses to OOS Sharpe (0.07–0.16), an
 1 of 3 assets beats buy & hold out-of-sample. Classic overfitting — the naive signal
 is **not robust**, which is why the product is sold as analysis, not alpha.
 
+## Delta-neutral pairs (the strongest edge found)
+
+`pairs.py` applies "kimchi-premium" logic to carbon ETFs: two funds that should
+track each other (e.g. **KRBN vs GRN**, correlation 0.92) occasionally diverge.
+Trade the spread z-score — short the rich, long the cheap, equal dollars — so market
+direction cancels (delta ~ 0) and you bet only on convergence. Same IS/OOS honesty.
+
+```bash
+python pairs.py          # -> out/pairs.md + out/pairs_best.png
+```
+
+Result (honest, and much stronger than momentum): all 3 pairs beat OOS Sharpe 0.5,
+and **KRBN/GRN reaches OOS Sharpe ~1.0 — higher than in-sample**, i.e. not overfit.
+Delta-neutral convergence is the real edge candidate here. Caveat: transaction /
+borrow / slippage costs are **not** modeled; required before any live trading.
+
 ## Dashboard (view it in a browser)
 
 `dashboard.py` builds a single self-contained `out/dashboard.html` (charts embedded
 as base64 — no server, no cost) with the snapshot, per-asset backtest equity curves,
-and the IS/OOS research verdict. Double-click to open.
+the IS/OOS research verdict, and the delta-neutral pairs section. Double-click to open.
 
 ```bash
 python dashboard.py      # -> out/dashboard.html
