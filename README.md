@@ -181,6 +181,21 @@ long-biased **tilt**, not market-neutral alpha; seasonals decay once crowded. Re
 can express Feb-short by buying the KRX inverse ETF **459370** (no shorting needed).
 Drop `data/eua_long.csv` (`date,close`) for a longer sample.
 
+## CBAM cost calculator (the Korea revenue engine)
+
+`cbam.py` estimates the EU Carbon Border Adjustment (CBAM) cost a Korean exporter of
+steel/aluminium/cement/fertilizer/hydrogen faces from 2026, as free allocation phases
+out (2.5% → 100% by 2034). A mid-size steel exporter (20,000 t to the EU) faces a
+**cumulative ~€10.8M (~₩15.6bn)** — a concrete, mandatory cost that makes a paying
+customer. This is a free lead magnet for paid CBAM reports / consulting; see
+`launch/korea-revenue.md`.
+
+```bash
+python cbam.py steel 20000 1.9   # product, tonnes-to-EU, tCO2/tonne
+```
+
+Emission factors are indicative benchmarks; real filing needs verified measured data.
+
 ## Dashboard (view it in a browser)
 
 `dashboard.py` builds a single self-contained `out/dashboard.html` (charts embedded
