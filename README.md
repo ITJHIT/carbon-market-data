@@ -163,6 +163,24 @@ large **policy scarcity premium** (MSR, cap tightening) is priced in — premium
 newsletter content, not a push-button trade. Coal history ends ~2025-12, so the live
 fair value needs a current coal price (CSV drop).
 
+## Seasonality — the forced-flow edge (best lead found)
+
+`seasonal.py` tests carbon's calendar structure. Unlike price momentum (no OOS edge),
+seasonality has a **structural cause**: EU free allocation is delivered end-February
+(industry sells -> supply), compliance demand builds into year-end.
+
+```bash
+python seasonal.py       # -> out/seasonal.png + monthly table + overlay backtest
+```
+
+Findings: February is weak (CO2.L −8.8% avg, 4/5 years down; last 3 years −12/−15%),
+December strong (t = 2.6, the most significant single month). A long position that
+**sits out (or shorts) February** lifted Sharpe 0.66 → 0.92 (0.66 → 1.05 short-Feb)
+with lower drawdown, costs included. Caveats: only ~6 Februaries (low power); it is a
+long-biased **tilt**, not market-neutral alpha; seasonals decay once crowded. Retail
+can express Feb-short by buying the KRX inverse ETF **459370** (no shorting needed).
+Drop `data/eua_long.csv` (`date,close`) for a longer sample.
+
 ## Dashboard (view it in a browser)
 
 `dashboard.py` builds a single self-contained `out/dashboard.html` (charts embedded

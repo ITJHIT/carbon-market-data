@@ -5,3 +5,4 @@ venv/
 out/
 data/kau.csv
 data/krx_carbon.csv
+data/eua_long.csv
