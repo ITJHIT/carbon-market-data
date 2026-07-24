@@ -119,6 +119,33 @@ python alpha_check.py KRBN GRN
 Verdict for KRBN/GRN: **fails** — walk-forward combined OOS Sharpe ≈ -0.07 after
 costs. No reliable alpha. Use this before ever trusting a backtest.
 
+## KRX carbon-ETF premium residual box (why cross-broker "arb" is a mirage)
+
+A common idea: long the carbon ETF at a Korean broker, short it at IBKR. **It is not
+arbitrage** — KRBN/KEUA are single US-listed securities; a Korean "해외주식" order is
+routed to the *same* NYSE Arca book, so both legs get the same price (you just pay
+double fees + FX). Kimchi premium works only because Upbit and Binance are *separate*
+order books (capital controls segment them).
+
+The real analog is a **KRX-listed** carbon ETF (KRW, e.g. KODEX 400570) vs its own
+**iNAV** — two genuinely separate "venues". `premium_box.py` builds the residual box:
+
+    premium = close/NAV - 1;  residual = premium - rolling_mean;  z = residual/std
+
+It also estimates the **mean-reversion half-life** (AR(1)) — if the residual does not
+revert, the box is noise. Data drop: `data/krx_carbon.csv` (`date,close,nav` from
+data.krx.co.kr / Naver; sample in `data/krx_carbon_sample.csv`, gitignored real file).
+
+```bash
+python premium_box.py
+```
+
+Honest frictions (why it is a *monitor*, not a retail arb): (1) retail **cannot short
+KRX ETFs**, so the premium (top) leg is unexecutable; (2) no clean hedge — KEUA is
+effectively delisted; (3) KRX and ICE EUA-futures hours barely overlap, so much of the
+"gap" is a **stale-price artifact** that cannot be captured. Useful as a Korean-retail
+sentiment gauge / newsletter content, not a tradeable edge.
+
 ## Dashboard (view it in a browser)
 
 `dashboard.py` builds a single self-contained `out/dashboard.html` (charts embedded

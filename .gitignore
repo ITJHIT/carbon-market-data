@@ -4,3 +4,4 @@ __pycache__/
 venv/
 out/
 data/kau.csv
+data/krx_carbon.csv
