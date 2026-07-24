@@ -73,6 +73,30 @@ Honesty note: on KRBN the naive long/flat momentum signal **underperformed** buy
 hold. That is the point — the engine gives an unfiltered verdict before any capital
 is risked, and the product is positioned as market *intelligence*, not a magic signal.
 
+## Signal research (in-sample / out-of-sample)
+
+`research.py` sweeps (MA window × momentum lookback) across carbon assets, picks the
+best parameters on the first 60% of history, then reports their performance on the
+unseen last 40%. A signal only earns trust if it also wins **out-of-sample**.
+
+```bash
+python research.py       # -> out/research.md + verdict
+```
+
+Result (honest): IS Sharpe (0.5–0.9) collapses to OOS Sharpe (0.07–0.16), and only
+1 of 3 assets beats buy & hold out-of-sample. Classic overfitting — the naive signal
+is **not robust**, which is why the product is sold as analysis, not alpha.
+
+## Dashboard (view it in a browser)
+
+`dashboard.py` builds a single self-contained `out/dashboard.html` (charts embedded
+as base64 — no server, no cost) with the snapshot, per-asset backtest equity curves,
+and the IS/OOS research verdict. Double-click to open.
+
+```bash
+python dashboard.py      # -> out/dashboard.html
+```
+
 ## Why
 
 Phase 2 of the carbon roadmap ([carbon-credit-token](../carbon-token/ROADMAP.md)):
