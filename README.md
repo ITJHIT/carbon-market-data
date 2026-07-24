@@ -98,10 +98,26 @@ direction cancels (delta ~ 0) and you bet only on convergence. Same IS/OOS hones
 python pairs.py          # -> out/pairs.md + out/pairs_best.png
 ```
 
-Result (honest, and much stronger than momentum): all 3 pairs beat OOS Sharpe 0.5,
-and **KRBN/GRN reaches OOS Sharpe ~1.0 — higher than in-sample**, i.e. not overfit.
-Delta-neutral convergence is the real edge candidate here. Caveat: transaction /
-borrow / slippage costs are **not** modeled; required before any live trading.
+Result — honest and important: a single 60/40 split looked great (KRBN/GRN OOS
+Sharpe ~1.0), but that was a **lucky split**. Rigorous validation (`alpha_check.py`:
+cost sensitivity + parameter plateau + sub-period + expanding walk-forward) shows the
+edge **does not hold**: after 10 bps/leg costs the walk-forward combined OOS Sharpe is
+**~ -0.07** (essentially zero). So there is **no reliable alpha** here yet — the naive
+pair is not tradeable. This is exactly why single-split backtests must never be trusted.
+
+## Alpha check (does the edge survive rigorous testing?)
+
+`alpha_check.py` subjects a pair to four tests that a real edge must pass:
+transaction-cost sensitivity, parameter-plateau robustness, sub-period stability,
+and an expanding **walk-forward** (re-pick params on the past, test on the unseen
+future, repeatedly).
+
+```bash
+python alpha_check.py KRBN GRN
+```
+
+Verdict for KRBN/GRN: **fails** — walk-forward combined OOS Sharpe ≈ -0.07 after
+costs. No reliable alpha. Use this before ever trusting a backtest.
 
 ## Dashboard (view it in a browser)
 
