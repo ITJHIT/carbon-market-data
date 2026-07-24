@@ -35,11 +35,17 @@ KRBN   33.75      1.81      0.78           24.1            UP     LONG
 | Ticker | Market |
 |--------|--------|
 | KRBN | KraneShares Global Carbon (EU / global allowances) |
+| KEUA | KraneShares European Carbon Allowance (pure EU ETS / EUA) |
 | KCCA | KraneShares California Carbon (CCA) |
 | GRN  | iPath Global Carbon ETN |
 
-Source: Yahoo Finance (free, daily). Roadmap: add **EU ETS (EUA) spot/futures**
-and **Korea K-ETS (KAU, from KRX)** direct series, plus a weekly auto-publish job.
+Source: Yahoo Finance (free, daily). The report also computes a **cross-market
+relative-value read** (EU vs California, KEUA/KCCA ratio + 60-day z-score) and
+flags stale/thin series as `STALE-DATA` instead of faking a signal.
+
+A **GitHub Actions cron** (`.github/workflows/weekly.yml`) regenerates the report
+every Monday and commits it to `reports/latest/`, so the repo stays a *living*
+artifact. Roadmap: add **Korea K-ETS (KAU, from KRX)** direct series.
 
 ## Why
 

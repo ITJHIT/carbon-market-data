@@ -31,6 +31,7 @@ import yfinance as yf
 # GRN = iPath global carbon. Free daily data via Yahoo Finance.
 TICKERS = {
     "KRBN": "KraneShares Global Carbon (EU/global allowances)",
+    "KEUA": "KraneShares European Carbon Allowance (pure EU ETS / EUA)",
     "KCCA": "KraneShares California Carbon (CCA)",
     "GRN": "iPath Global Carbon ETN",
 }
@@ -62,8 +63,12 @@ def metrics(close: pd.DataFrame) -> pd.DataFrame:
         vol = rets[t].tail(20).std() * (252 ** 0.5)
         ma50 = s.tail(50).mean()
         trend = "UP" if last > ma50 else "DOWN"
-        # Simple signal: trend + 1m momentum agreement.
-        if trend == "UP" and r_1m > 0:
+        # Data-quality guard: a flat recent series (stale Yahoo feed for thin
+        # ETFs) yields meaningless momentum — flag it instead of faking a signal.
+        stale = (vol == 0) or pd.isna(vol) or (r_1m == 0 and r_1w == 0)
+        if stale:
+            trend, signal = "n/a", "STALE-DATA"
+        elif trend == "UP" and r_1m > 0:
             signal = "LONG"
         elif trend == "DOWN" and r_1m < 0:
             signal = "SHORT/AVOID"
@@ -109,7 +114,23 @@ def _df_to_md(df: pd.DataFrame) -> str:
     return "\n".join(out)
 
 
-def write_report(m: pd.DataFrame, chart_path: str, path: str) -> None:
+def spread_analytics(close: pd.DataFrame):
+    """EU (KEUA) vs California (KCCA) carbon relative value: ratio + 60d z-score.
+
+    A classic cross-market relative-value read: when the EU/California price ratio
+    is far from its recent mean, the two carbon markets have diverged.
+    """
+    if "KEUA" not in close.columns or "KCCA" not in close.columns:
+        return None
+    df = close[["KEUA", "KCCA"]].dropna()
+    if len(df) < 60:
+        return None
+    ratio = df["KEUA"] / df["KCCA"]
+    z = (ratio.iloc[-1] - ratio.tail(60).mean()) / ratio.tail(60).std()
+    return {"ratio_last": round(float(ratio.iloc[-1]), 4), "z60": round(float(z), 2)}
+
+
+def write_report(m: pd.DataFrame, spread, chart_path: str, path: str) -> None:
     today = date.today().isoformat()
     lines = [
         f"# Carbon Market Weekly — {today}",
@@ -121,6 +142,22 @@ def write_report(m: pd.DataFrame, chart_path: str, path: str) -> None:
         "## Snapshot",
         "",
         _df_to_md(m),
+        "",
+        "## Cross-market — EU vs California (relative value)",
+        "",
+        (
+            "- KEUA/KCCA 비율 {}, 60일 z-score {} → {}".format(
+                spread["ratio_last"],
+                spread["z60"],
+                "EU 상대적 고평가"
+                if spread["z60"] > 1
+                else "EU 상대적 저평가"
+                if spread["z60"] < -1
+                else "중립 범위",
+            )
+            if spread
+            else "- (KEUA/KCCA 데이터 부족)"
+        ),
         "",
         "## This week (draft)",
         "- KRBN(글로벌/EU 배출권): {} — 추세 {}, 1개월 {}%".format(
@@ -149,7 +186,8 @@ def main() -> None:
     chart_path = os.path.join(OUT, "carbon_prices.png")
     report_path = os.path.join(OUT, "weekly_report.md")
     chart(close, chart_path)
-    write_report(m, chart_path, report_path)
+    spread = spread_analytics(close)
+    write_report(m, spread, chart_path, report_path)
     print(m.to_string())
     print(f"\nWrote {chart_path} and {report_path}")
 
