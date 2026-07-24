@@ -146,6 +146,23 @@ effectively delisted; (3) KRX and ICE EUA-futures hours barely overlap, so much 
 "gap" is a **stale-price artifact** that cannot be captured. Useful as a Korean-retail
 sentiment gauge / newsletter content, not a tradeable edge.
 
+## EUA fundamental fair value (fuel-switching model)
+
+`fair_value.py` computes EUA's coal-to-gas **fuel-switching band** from real EU data
+(TTF gas `TTF=F`, API2 coal `MTF=F`, physical-EUA ETC `CO2.L`, `EURUSD=X`) and tests a
+"long when EUA is below the band" signal (IS/OOS + costs).
+
+```bash
+python fair_value.py     # -> out/fair_value.png + stats
+```
+
+Findings (honest): (1) as a trade it **fails out-of-sample** (OOS +1.2% vs buy&hold
++3.0%) — no reliable timing edge, consistent with momentum/pairs/premium. (2) The real
+value is descriptive: EUA trades **~40% above** its fuel-switching fair value, i.e. a
+large **policy scarcity premium** (MSR, cap tightening) is priced in — premium
+newsletter content, not a push-button trade. Coal history ends ~2025-12, so the live
+fair value needs a current coal price (CSV drop).
+
 ## Dashboard (view it in a browser)
 
 `dashboard.py` builds a single self-contained `out/dashboard.html` (charts embedded
