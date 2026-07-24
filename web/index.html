@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CBAM 비용 계산기 — EU 탄소국경세 | 한국 수출기업용</title>
-<meta name="description" content="2026년 시행 EU 탄소국경조정제도(CBAM) 비용을 품목·수출량으로 즉시 추정. 철강·알루미늄·시멘트·비료·수소." />
+<meta name="description" content="2026년 시행 EU 탄소국경조정제도(CBAM) 비용을 품목·공정·수출량으로 즉시 추정하고, 배출 감축 시 절감액까지 시뮬레이션." />
 <style>
   :root { --g:#1b7a1b; --d:#0f2e14; --line:#e4e7e4; --bg:#f6f8f6; }
   * { box-sizing:border-box; }
@@ -16,12 +16,14 @@
   .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px; margin:14px 0; }
   label { display:block; font-size:.85rem; font-weight:600; margin:10px 0 4px; }
   input, select { width:100%; padding:10px 12px; border:1px solid #cdd4cd; border-radius:9px; font-size:1rem; background:#fff; }
+  input[type=range] { padding:0; }
   .row { display:flex; gap:12px; flex-wrap:wrap; }
   .row > div { flex:1 1 180px; }
   .kpis { display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; }
   .kpi { flex:1 1 150px; background:#0f2e14; color:#eaf7ec; border-radius:12px; padding:14px; }
-  .kpi .n { font-size:1.35rem; font-weight:800; }
-  .kpi .l { font-size:.76rem; opacity:.8; }
+  .kpi.save { background:#0d3b66; }
+  .kpi .n { font-size:1.32rem; font-weight:800; }
+  .kpi .l { font-size:.76rem; opacity:.82; }
   table { border-collapse:collapse; width:100%; font-size:.9rem; margin-top:6px; }
   th,td { border:1px solid var(--line); padding:7px 9px; text-align:right; }
   th:first-child,td:first-child { text-align:left; }
@@ -30,6 +32,7 @@
   .cta { background:linear-gradient(135deg,#123f1a,#1b7a1b); color:#fff; border-radius:14px; padding:20px; text-align:center; }
   .cta a { display:inline-block; margin-top:10px; background:#fff; color:#123f1a; font-weight:700; text-decoration:none; padding:10px 20px; border-radius:9px; }
   .note { font-size:.78rem; color:#7a857a; line-height:1.5; }
+  .redval { font-weight:800; color:var(--g); }
   a.gh { color:var(--g); }
 </style>
 </head>
@@ -38,7 +41,7 @@
   <header>
     <span class="badge">2026년 시행 · EU CBAM</span>
     <h1>EU 탄소국경세(CBAM) 비용 계산기</h1>
-    <p>철강·알루미늄·시멘트·비료·수소를 EU에 수출하면 내야 할 탄소 비용을 즉시 추정합니다.</p>
+    <p>품목·공정·수출량으로 탄소 비용을 즉시 추정하고, 배출을 줄이면 얼마를 아끼는지까지 봅니다.</p>
   </header>
 
   <div class="card">
@@ -48,23 +51,33 @@
         <select id="product"></select>
       </div>
       <div>
-        <label for="tonnes">연간 EU 수출량 (톤)</label>
-        <input id="tonnes" type="number" value="20000" min="0" />
+        <label for="sub">공정/유형</label>
+        <select id="sub"></select>
       </div>
     </div>
     <div class="row">
       <div>
-        <label for="ef">배출계수 (tCO₂/톤) <span style="font-weight:400;color:#8a948a">· 실측값으로 수정</span></label>
-        <input id="ef" type="number" step="0.01" value="1.9" />
+        <label for="tonnes">연간 EU 수출량 (톤)</label>
+        <input id="tonnes" type="number" value="20000" min="0" />
       </div>
       <div>
-        <label for="eua">EUA 가격 (€/tCO₂) <span style="font-weight:400;color:#8a948a">· 인증서 가격</span></label>
+        <label for="ef">배출계수 (tCO₂/톤) <span style="font-weight:400;color:#8a948a">· 실측값으로 수정</span></label>
+        <input id="ef" type="number" step="0.01" value="2.2" />
+      </div>
+      <div>
+        <label for="eua">EUA 가격 (€/tCO₂)</label>
         <input id="eua" type="number" step="0.1" value="70" />
       </div>
     </div>
   </div>
 
   <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <label for="reduce">배출 감축 시뮬레이터 — 감축률 <span id="rlbl" class="redval">0%</span></label>
+    <input id="reduce" type="range" min="0" max="100" step="5" value="0" />
+    <div id="savebox" style="margin-top:10px;font-size:.95rem"></div>
+  </div>
 
   <div class="card">
     <strong>연도별 CBAM 비용 (무상할당 단계 폐지 반영)</strong>
@@ -74,70 +87,95 @@
 
   <div class="cta">
     <div style="font-size:1.05rem;font-weight:700">이 숫자가 부담스럽다면, 대응 방법이 있습니다</div>
-    <div style="font-size:.9rem;opacity:.9;margin-top:6px">실측 배출량 기반 정밀 리포트 · 배출 절감 시나리오 · 인증 가이드</div>
+    <div style="font-size:.9rem;opacity:.9;margin-top:6px">실측 배출량 기반 정밀 리포트 · 공정 전환(전기로·재생·그린수소) 절감 시나리오 · 인증 가이드</div>
     <a href="mailto:sjhedwin@gmail.com?subject=CBAM%20상세%20리포트%20문의">상세 리포트/컨설팅 문의 →</a>
   </div>
 
   <p class="note">
-    배출계수는 공개 벤치마크 근사치입니다(철강 조강 ~1.9, 알루미늄 ~1.6, 시멘트 ~0.66, 비료 ~1.8, 수소 ~10 tCO₂/톤).
-    실제 CBAM 신고는 검증된 실측 배출량이 필요합니다. 본 도구는 추정·교육용이며 법적 신고 자료가 아닙니다.
-    CBAM 의무 반영률: 2026년 2.5% → 2034년 100%. 모든 계산은 브라우저 내에서 처리되며 데이터는 전송되지 않습니다.<br/>
+    배출계수는 공개 벤치마크 근사치입니다. 실제 CBAM 신고는 검증된 실측 배출량이 필요합니다.
+    본 도구는 추정·교육용이며 법적 신고 자료가 아닙니다. CBAM 의무 반영률: 2026년 2.5% → 2034년 100%.
+    모든 계산은 브라우저 내에서 처리되며 데이터는 전송되지 않습니다.<br/>
     오픈소스: <a class="gh" href="https://github.com/ITJHIT/carbon-market-data">github.com/ITJHIT/carbon-market-data</a>
   </p>
 </div>
 
 <script>
 const PHASE_IN = {2026:0.025,2027:0.05,2028:0.10,2029:0.225,2030:0.485,2031:0.61,2032:0.735,2033:0.86,2034:1.00};
-const EF = {steel:1.9,aluminium:1.6,cement:0.66,fertilizer:1.8,hydrogen:10.0,electricity:0.4};
-const KO = {steel:"철강",aluminium:"알루미늄",cement:"시멘트",fertilizer:"비료",hydrogen:"수소",electricity:"전력(MWh)"};
-const KRW = 1450; // €→₩ 근사
-
+// 품목 > 공정/유형별 지시적 배출계수 (tCO2/톤). 공정 전환의 영향을 보여주기 위해 세분화.
+const PRODUCTS = {
+  steel:      {label:"철강",   subs:{"고로 (BF-BOF)":2.2, "전기로 (EAF)":0.4}},
+  aluminium:  {label:"알루미늄", subs:{"1차 (신지금)":1.6, "재생 알루미늄":0.3}},
+  cement:     {label:"시멘트",  subs:{"일반 (OPC)":0.66, "혼합 시멘트":0.5}},
+  fertilizer: {label:"질소비료", subs:{"요소":1.8, "질산암모늄":2.2}},
+  hydrogen:   {label:"수소",    subs:{"그레이":10.0, "블루":4.0, "그린":0.5}},
+};
+const KRW = 1450;
 const $ = id => document.getElementById(id);
-const sel = $("product");
-for (const k in KO){ const o=document.createElement("option"); o.value=k; o.textContent=KO[k]; sel.appendChild(o); }
+const selP=$("product"), selS=$("sub");
+for(const k in PRODUCTS){ const o=document.createElement("option"); o.value=k; o.textContent=PRODUCTS[k].label; selP.appendChild(o); }
 
+function fillSubs(){
+  selS.innerHTML="";
+  const subs=PRODUCTS[selP.value].subs;
+  for(const s in subs){ const o=document.createElement("option"); o.value=s; o.textContent=s; selS.appendChild(o); }
+  $("ef").value=subs[Object.keys(subs)[0]];
+}
 function fmt(n){ return Math.round(n).toLocaleString("ko-KR"); }
+function eok(eur){ return (eur*KRW/1e8).toFixed(1); }
 
 function calc(){
-  const p=sel.value, tonnes=+$("tonnes").value||0, ef=+$("ef").value||0, eua=+$("eua").value||0;
-  const embedded = tonnes*ef;
+  const tonnes=+$("tonnes").value||0, ef=+$("ef").value||0, eua=+$("eua").value||0;
+  const red=(+$("reduce").value||0)/100;
+  const embedded=tonnes*ef;
   const years=Object.keys(PHASE_IN).map(Number);
-  const rows=years.map(y=>{ const frac=PHASE_IN[y]; const cost=embedded*frac*eua; return {y,frac,bill:embedded*frac,cost}; });
+  const rows=years.map(y=>{ const frac=PHASE_IN[y]; const cost=embedded*frac*eua; return {y,frac,bill:embedded*frac,cost,costR:cost*(1-red)}; });
   const total=rows.reduce((a,r)=>a+r.cost,0);
+  const totalR=rows.reduce((a,r)=>a+r.costR,0);
   const last=rows[rows.length-1].cost;
 
   $("kpis").innerHTML =
-    kpi(fmt(embedded)+" tCO₂","연간 내재배출") +
-    kpi("€"+fmt(last),"2034년 연 비용 (100%)") +
-    kpi("€"+fmt(total),"2026~2034 누적") +
-    kpi("약 "+ (total*KRW/1e8).toFixed(1) +"억원","누적 (원화 근사)");
+    kpi(fmt(embedded)+" tCO₂","연간 내재배출","") +
+    kpi("€"+fmt(last),"2034년 연 비용 (100%)","") +
+    kpi("€"+fmt(total),"2026~2034 누적","") +
+    kpi("약 "+eok(total)+"억원","누적 (원화 근사)","");
 
-  let t="<tr><th>연도</th><th>의무%</th><th>과금 tCO₂</th><th>비용(€)</th><th>비용(억원)</th></tr>";
+  $("rlbl").textContent=(red*100).toFixed(0)+"%";
+  $("savebox").innerHTML = red>0
+    ? `배출을 <span class="redval">${(red*100).toFixed(0)}%</span> 줄이면 → 누적 CBAM 비용 <b>${eok(total)}억 → ${eok(totalR)}억원</b>, ` +
+      `<span class="redval">약 ${eok(total-totalR)}억원 절감</span> (2026~2034).`
+    : `감축률을 올리면(공정 전환·에너지 효율화) 절감액이 실시간으로 계산됩니다.`;
+
+  let t="<tr><th>연도</th><th>의무%</th><th>과금 tCO₂</th><th>비용(억원)</th><th>감축후(억원)</th></tr>";
   for(const r of rows){
-    t+=`<tr><td>${r.y}</td><td>${(r.frac*100).toFixed(1)}</td><td>${fmt(r.bill)}</td><td>${fmt(r.cost)}</td><td>${(r.cost*KRW/1e8).toFixed(2)}</td></tr>`;
+    t+=`<tr><td>${r.y}</td><td>${(r.frac*100).toFixed(1)}</td><td>${fmt(r.bill)}</td><td>${eok(r.cost)}</td><td>${eok(r.costR)}</td></tr>`;
   }
   $("tbl").innerHTML=t;
-  drawChart(rows);
+  drawChart(rows,red);
 }
+function kpi(n,l,c){ return `<div class="kpi ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`; }
 
-function kpi(n,l){ return `<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`; }
-
-function drawChart(rows){
+function drawChart(rows,red){
   const W=800,H=190,pad=24, max=Math.max(...rows.map(r=>r.cost))||1;
   const bw=(W-pad*2)/rows.length*0.7, gap=(W-pad*2)/rows.length;
   let s="";
   rows.forEach((r,i)=>{
-    const h=(H-pad*2)*(r.cost/max);
-    const x=pad+i*gap+(gap-bw)/2, y=H-pad-h;
-    s+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="#1b7a1b"></rect>`;
+    const x=pad+i*gap+(gap-bw)/2;
+    const h=(H-pad*2)*(r.cost/max), y=H-pad-h;
+    s+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="#c8e6c9"></rect>`;
+    if(red>0){ const hr=(H-pad*2)*(r.costR/max), yr=H-pad-hr;
+      s+=`<rect x="${x.toFixed(1)}" y="${yr.toFixed(1)}" width="${bw.toFixed(1)}" height="${hr.toFixed(1)}" rx="3" fill="#1b7a1b"></rect>`;
+    } else {
+      s+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="#1b7a1b"></rect>`;
+    }
     s+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-8}" font-size="11" fill="#5a655a" text-anchor="middle">${r.y}</text>`;
   });
   $("chart").innerHTML=s;
 }
 
-sel.addEventListener("change",()=>{ $("ef").value=EF[sel.value]; calc(); });
-["tonnes","ef","eua"].forEach(id=>$(id).addEventListener("input",calc));
-calc();
+selP.addEventListener("change",()=>{ fillSubs(); calc(); });
+selS.addEventListener("change",()=>{ $("ef").value=PRODUCTS[selP.value].subs[selS.value]; calc(); });
+["tonnes","ef","eua","reduce"].forEach(id=>$(id).addEventListener("input",calc));
+fillSubs(); calc();
 </script>
 </body>
 </html>
