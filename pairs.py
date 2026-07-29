@@ -1,6 +1,6 @@
 """
-Delta-neutral pairs trading on carbon assets — the "kimchi-premium" logic applied
-to carbon ETFs.
+Delta-neutral pairs trading on carbon assets — cross-venue premium mean reversion
+applied to carbon ETFs.
 
 Idea: two carbon ETFs that should track each other (e.g. KRBN vs GRN) occasionally
 diverge. Trade the *spread*, not the direction:

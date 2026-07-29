@@ -1,7 +1,8 @@
 """
 Premium residual-box analyzer for a KRX-listed foreign-underlying ETF
-(e.g. KODEX 유럽탄소배출권선물ICE(H), code 400570) — the "kimchi-premium" logic
-applied to an ETF whose **market price** and **iNAV** behave like two venues.
+(e.g. KODEX 유럽탄소배출권선물ICE(H), code 400570) — cross-venue premium mean
+reversion applied to an ETF whose **market price** and **iNAV** behave like two
+separate venues.
 
     premium   = close / NAV - 1            (rich = premium, cheap = discount)
     box_mid   = rolling mean of premium    (the slowly-moving fair band)

@@ -89,7 +89,7 @@ is **not robust**, which is why the product is sold as analysis, not alpha.
 
 ## Delta-neutral pairs (the strongest edge found)
 
-`pairs.py` applies "kimchi-premium" logic to carbon ETFs: two funds that should
+`pairs.py` applies cross-venue premium mean reversion to carbon ETFs: two funds that should
 track each other (e.g. **KRBN vs GRN**, correlation 0.92) occasionally diverge.
 Trade the spread z-score — short the rich, long the cheap, equal dollars — so market
 direction cancels (delta ~ 0) and you bet only on convergence. Same IS/OOS honesty.
@@ -124,8 +124,9 @@ costs. No reliable alpha. Use this before ever trusting a backtest.
 A common idea: long the carbon ETF at a Korean broker, short it at IBKR. **It is not
 arbitrage** — KRBN/KEUA are single US-listed securities; a Korean "해외주식" order is
 routed to the *same* NYSE Arca book, so both legs get the same price (you just pay
-double fees + FX). Kimchi premium works only because Upbit and Binance are *separate*
-order books (capital controls segment them).
+double fees + FX). A price gap is only tradeable when the two quotes come from
+genuinely *separate* order books — which is what a structurally segmented market
+gives you and a single shared book never does.
 
 The real analog is a **KRX-listed** carbon ETF (KRW, e.g. KODEX 400570) vs its own
 **iNAV** — two genuinely separate "venues". `premium_box.py` builds the residual box:
