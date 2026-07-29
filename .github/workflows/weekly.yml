@@ -21,11 +21,61 @@ jobs:
         run: pip install -r requirements.txt
       - name: Generate report
         run: python carbon_report.py
-      - name: Publish latest report
+
+      - name: Stage the report
         run: |
           mkdir -p reports/latest
           cp out/weekly_report.md   reports/latest/weekly_report.md
           cp out/carbon_prices.png  reports/latest/carbon_prices.png
+
+      # This job holds `contents: write`, so it is the one path into this public
+      # repository that a local pre-push hook can never see. Everything it is
+      # about to publish is checked here, before the commit rather than after.
+      - name: Guard what is about to be published
+        env:
+          GUARD_PATTERNS: ${{ secrets.CONTENT_GUARD_PATTERNS }}
+        run: |
+          set -uo pipefail
+          target=reports/latest
+          fail=0
+
+          # Credential shapes. Safe to spell out in public -- every scanner
+          # already knows these, so naming them reveals nothing.
+          if grep -rEqi 'BEGIN [A-Z ]*PRIVATE KEY|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,}' "$target"; then
+            echo "::error::a credential-shaped string appears in the generated report"
+            fail=1
+          fi
+
+          # Project-specific patterns live in a repository secret, so this file
+          # does not itself publish the list it is defending. One pattern per
+          # line; matching is case-insensitive.
+          if [ -z "${GUARD_PATTERNS:-}" ]; then
+            echo "::error::CONTENT_GUARD_PATTERNS is not set -- refusing to publish unguarded."
+            echo "::error::A missing guard is not a passing guard."
+            exit 1
+          fi
+
+          while IFS= read -r pat; do
+            [ -z "$pat" ] && continue
+            if grep -rEqi -e "$pat" "$target"; then
+              # Deliberately does not echo the pattern or the matching line:
+              # this log is public, and naming the match would leak exactly
+              # what the secret exists to keep out of it.
+              echo "::error::generated report matched a guarded pattern (see the secret list)"
+              fail=1
+            fi
+          done <<EOF
+          $GUARD_PATTERNS
+          EOF
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::publication blocked"
+            exit 1
+          fi
+          echo "guard: clean — $(find "$target" -type f | wc -l) file(s) cleared for publication"
+
+      - name: Commit and push
+        run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add reports/
