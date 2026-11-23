@@ -1,4 +1,4 @@
-# Carbon Market Weekly — 2026-11-16
+# Carbon Market Weekly — 2026-11-23
 
 탄소배출권 시장 주간 브리핑 (EU ETS / 글로벌 / 캘리포니아 CCA 프록시).
 
@@ -8,16 +8,15 @@
 
 | ticker | last | ret_1w_% | ret_1m_% | vol_20d_ann_% | trend_vs_MA50 | signal |
 | --- | --- | --- | --- | --- | --- | --- |
-| GRN | 35.24 | 0.17 | 2.7 | 21.1 | UP | LONG |
-| KCCA | 17.41 | -0.4 | 3.45 | 9.2 | UP | LONG |
-| KRBN | 34.5 | -1.54 | 2.68 | 14.4 | UP | LONG |
+| GRN | 32.52 | -7.31 | -6.07 | 27.8 | DOWN | SHORT/AVOID |
+| KRBN | 33.24 | -3.62 | -2.58 | 22.0 | DOWN | SHORT/AVOID |
 
 ## Cross-market — EU vs California (relative value)
 
 - (KEUA/KCCA 데이터 부족)
 
 ## This week (draft)
-- KRBN(글로벌/EU 배출권): LONG — 추세 UP, 1개월 2.68%
+- KRBN(글로벌/EU 배출권): SHORT/AVOID — 추세 DOWN, 1개월 -2.58%
 - (여기에 뉴스/정책 코멘트 2~3줄: EU ETS 정책, MSR, 경매 결과, K-ETS 동향 등)
 
 > Signal 규칙: 50일 이동평균 추세 + 1개월 모멘텀 동조 시 LONG/AVOID, 불일치 시 NEUTRAL.
